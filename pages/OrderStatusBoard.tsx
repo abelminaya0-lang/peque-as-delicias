@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Order } from '../types.ts';
+import { Order, OrderStatus } from '../types.ts';
 import { orderService } from '../services/orderService.ts';
 
 const OrderStatusBoard: React.FC = () => {
@@ -8,31 +8,16 @@ const OrderStatusBoard: React.FC = () => {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    // Carga inicial y suscripción a cambios de órdenes
-    setOrders(orderService.getOrders());
+    // Suscripción reactiva al servicio de pedidos
     orderService.onUpdate(setOrders);
     
-    // Intervalo para actualizar el cronómetro cada segundo
-    const timerInterval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
-    // Intervalo de respaldo para sincronización forzada de órdenes
-    const syncInterval = setInterval(() => {
-      setOrders(orderService.getOrders());
-    }, 5000);
-
-    return () => {
-      clearInterval(timerInterval);
-      clearInterval(syncInterval);
-    };
+    // Actualización del cronómetro cada segundo
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const preparing = orders.filter(o => o.status === 'pending' || o.status === 'preparing');
-  const ready = orders.filter(o => o.status === 'ready');
-
-  const deliverOrder = (id: string) => {
-    orderService.updateOrderStatus(id, 'delivered');
+  const updateStatus = (id: string, status: OrderStatus) => {
+    orderService.updateOrderStatus(id, status);
   };
 
   const formatTime = (createdAt: number) => {
@@ -42,79 +27,140 @@ const OrderStatusBoard: React.FC = () => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // Filtramos pedidos activos (no entregados)
+  const preparing = orders.filter(o => o.status === 'pending' || o.status === 'preparing');
+  const ready = orders.filter(o => o.status === 'ready');
+
   return (
-    <div className="h-[calc(100vh-80px)] bg-white flex flex-col md:flex-row overflow-hidden">
-      {/* Columna Preparando con Cronómetro */}
-      <div className="flex-1 p-8 md:p-16 border-b md:border-b-0 md:border-r border-slate-100 bg-slate-50/50 overflow-y-auto">
-        <div className="flex flex-col mb-12">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-5 h-5 rounded-full bg-orange-400 animate-pulse"></div>
-            <h2 className="text-5xl md:text-7xl font-black text-slate-800 uppercase tracking-tighter leading-none">Cocinando</h2>
+    <div className="h-[calc(100vh-80px)] bg-slate-50 flex flex-col md:flex-row overflow-hidden">
+      
+      {/* SECCIÓN: EN PREPARACIÓN */}
+      <div className="flex-[1.2] flex flex-col border-r border-slate-200">
+        <div className="p-8 bg-white border-b border-slate-100 flex justify-between items-end">
+          <div>
+            <h2 className="text-6xl font-black text-slate-900 tracking-tighter uppercase leading-none">Cocinando</h2>
+            <p className="font-brand text-red-600 text-2xl italic mt-2">de Ivanna</p>
           </div>
-          <p className="text-slate-400 font-bold uppercase text-xs tracking-widest ml-9">Tiempo en preparación</p>
+          <div className="text-right">
+            <span className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em]">En proceso</span>
+            <div className="text-4xl font-black text-slate-900 tabular-nums">{preparing.length}</div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
+        <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 gap-6 bg-slate-50/50">
           {preparing.map(o => (
-            <div 
-              key={o.id} 
-              className="bg-white p-10 rounded-[3.5rem] shadow-xl border-2 border-slate-50 flex flex-col items-center justify-center relative overflow-hidden group transition-all"
-            >
-              {/* Indicador de estado */}
-              <div className={`absolute top-0 left-0 w-full h-2 ${o.status === 'preparing' ? 'bg-orange-500' : 'bg-slate-200'}`}></div>
-              
-              <span className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-none">#{o.orderNumber}</span>
-              <span className="text-sm font-black text-slate-400 uppercase tracking-widest mt-4 mb-6">{o.customerName}</span>
-              
-              {/* Cronómetro Digital */}
-              <div className="flex items-center gap-3 bg-slate-900 px-8 py-3 rounded-2xl shadow-lg transform group-hover:scale-110 transition-transform">
-                <span className="text-red-500 animate-pulse text-xl">⏱</span>
-                <span className="font-mono text-3xl font-black text-white tracking-widest">
-                  {formatTime(o.createdAt)}
-                </span>
+            <div key={o.id} className={`bg-white rounded-[3rem] shadow-xl border-4 transition-all duration-500 overflow-hidden flex flex-col ${o.status === 'preparing' ? 'border-orange-400 ring-4 ring-orange-100' : 'border-white'}`}>
+              <div className="p-8 flex justify-between items-start">
+                <div className="flex gap-6 items-center">
+                  <div className="text-8xl font-black text-slate-900 tracking-tighter leading-none">#{o.orderNumber}</div>
+                  <div>
+                    <div className="text-2xl font-black text-slate-900 uppercase tracking-tight">{o.customerName}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`w-3 h-3 rounded-full ${o.status === 'preparing' ? 'bg-orange-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        {o.status === 'preparing' ? 'En el fuego' : 'Esperando turno'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {/* CRONOMETRO */}
+                <div className="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3">
+                  <span className="text-red-500 animate-pulse">⏱</span>
+                  <span className="font-mono text-3xl font-black tracking-widest">{formatTime(o.createdAt)}</span>
+                </div>
+              </div>
+
+              {/* LISTA DE PRODUCTOS */}
+              <div className="px-8 pb-6 flex-1">
+                <div className="bg-slate-50 rounded-3xl p-6 space-y-3 border border-slate-100">
+                  {o.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-black text-xs border border-slate-100">{item.quantity}</span>
+                        <span className="font-bold text-slate-700 uppercase text-sm tracking-tight">{item.name}</span>
+                        {item.selectedOption && <span className="text-[10px] font-black text-red-500 border border-red-100 px-2 py-0.5 rounded-full uppercase">{item.selectedOption}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ACCIONES */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 grid grid-cols-2 gap-4">
+                {o.status === 'pending' ? (
+                  <button 
+                    onClick={() => updateStatus(o.id, 'preparing')}
+                    className="col-span-2 bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all uppercase tracking-widest shadow-lg shadow-blue-100"
+                  >
+                    ▶ Iniciar Preparación
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => updateStatus(o.id, 'ready')}
+                    className="col-span-2 bg-green-500 text-white py-5 rounded-2xl font-black text-lg hover:bg-green-600 transition-all uppercase tracking-widest shadow-lg shadow-green-100"
+                  >
+                    ✔ ¡Terminado / Listo!
+                  </button>
+                )}
               </div>
             </div>
           ))}
           {preparing.length === 0 && (
-            <div className="col-span-full py-20 text-center opacity-20">
-               <span className="text-8xl mb-4">✨</span>
-               <p className="text-slate-900 font-black text-2xl uppercase tracking-tighter">Cocina despejada</p>
+            <div className="h-full flex flex-col items-center justify-center opacity-20">
+              <span className="text-9xl mb-4">✨</span>
+              <p className="text-2xl font-black uppercase tracking-widest">Sin pedidos pendientes</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Columna Listos para Entrega */}
-      <div className="flex-1 p-8 md:p-16 bg-red-600 overflow-y-auto">
-        <div className="flex flex-col mb-12">
-          <div className="flex items-center gap-4 mb-2">
-             <div className="w-5 h-5 rounded-full bg-white animate-ping"></div>
-             <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none">¡Recógelo!</h2>
+      {/* SECCIÓN: LISTOS PARA RECOGER */}
+      <div className="flex-1 flex flex-col bg-red-600">
+        <div className="p-8 bg-red-700/30 backdrop-blur-md border-b border-white/10 flex justify-between items-end">
+          <div>
+            <h2 className="text-6xl font-black text-white tracking-tighter uppercase leading-none">Listos</h2>
+            <p className="text-red-200 font-bold text-xl uppercase tracking-widest mt-2">¡A comer!</p>
           </div>
-          <p className="text-red-200 font-bold uppercase text-xs tracking-widest ml-9">Listos para disfrutar</p>
+          <div className="text-right">
+            <span className="text-red-200 font-black text-[10px] uppercase tracking-[0.4em]">Por entregar</span>
+            <div className="text-4xl font-black text-white tabular-nums">{ready.length}</div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
           {ready.map(o => (
-            <div 
-              key={o.id} 
-              onClick={() => deliverOrder(o.id)}
-              className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:scale-105 transition-all group relative border-4 border-white active:scale-95 overflow-hidden"
-            >
-              <div className="absolute top-6 left-6 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-8xl md:text-[10rem] font-black text-red-600 tracking-tighter leading-none">#{o.orderNumber}</span>
-              <span className="text-2xl font-black text-slate-900 uppercase tracking-tighter mt-4">{o.customerName}</span>
-              
-              <div className="absolute inset-0 bg-green-500 rounded-[3.5rem] opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-300 border-8 border-white">
-                <span className="text-white text-4xl font-black tracking-tighter uppercase mb-1">¡ENTREGAR!</span>
-                <span className="text-white/80 text-sm font-bold uppercase tracking-widest">Haz click al recibir</span>
+            <div key={o.id} className="bg-white rounded-[4rem] p-10 shadow-2xl transform hover:scale-[1.02] transition-all relative overflow-hidden group border-8 border-white">
+              <div className="flex flex-col items-center text-center">
+                <div className="text-[10rem] font-black text-red-600 leading-none tracking-tighter">#{o.orderNumber}</div>
+                <div className="text-3xl font-black text-slate-900 uppercase tracking-tighter mt-4">{o.customerName}</div>
+                
+                <div className="w-full mt-8 pt-8 border-t border-slate-100">
+                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-4">Contenido</p>
+                   <div className="flex flex-wrap justify-center gap-2">
+                     {o.items.map((i, idx) => (
+                       <span key={idx} className="bg-slate-100 px-4 py-2 rounded-full text-xs font-black text-slate-600 uppercase">
+                         {i.quantity}x {i.name}
+                       </span>
+                     ))}
+                   </div>
+                </div>
+
+                <button 
+                  onClick={() => updateStatus(o.id, 'delivered')}
+                  className="w-full mt-10 bg-slate-900 text-white py-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-widest hover:bg-green-500 transition-all shadow-xl"
+                >
+                  Entregado ✓
+                </button>
               </div>
+
+              {/* Overlay de confirmación rápida */}
+              <div className="absolute inset-0 bg-green-500 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none"></div>
             </div>
           ))}
           {ready.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center py-24 opacity-30">
-               <span className="text-9xl mb-6">🍽️</span>
-               <p className="text-white font-black text-3xl uppercase tracking-tighter text-center leading-none">Esperando más <br/>Delicias de Ivanna</p>
+            <div className="h-full flex flex-col items-center justify-center text-white/20">
+              <span className="text-[12rem] leading-none mb-4">🔔</span>
+              <p className="text-2xl font-black uppercase tracking-widest">Esperando salida</p>
             </div>
           )}
         </div>
