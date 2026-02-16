@@ -32,14 +32,14 @@ const OrderStatusBoard: React.FC = () => {
   const ready = orders.filter(o => o.status === 'ready');
 
   return (
-    <div className="h-[calc(100vh-80px)] bg-slate-50 flex flex-col md:flex-row overflow-hidden">
+    <div className="h-[calc(100vh-80px)] bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans">
       
       {/* SECCIÓN: EN PREPARACIÓN */}
       <div className="flex-[1.2] flex flex-col border-r border-slate-200">
         <div className="p-8 bg-white border-b border-slate-100 flex justify-between items-end">
           <div>
             <h2 className="text-6xl font-black text-slate-900 tracking-tighter uppercase leading-none">Cocinando</h2>
-            <p className="font-brand text-red-600 text-2xl italic mt-2">de Ivanna</p>
+            <p className="font-brand text-red-600 text-2xl italic mt-2">Pequeñas Delicias</p>
           </div>
           <div className="text-right">
             <span className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em]">En proceso</span>
@@ -58,15 +58,17 @@ const OrderStatusBoard: React.FC = () => {
                     <div className="flex items-center gap-2 mt-1">
                       <div className={`w-3 h-3 rounded-full ${o.status === 'preparing' ? 'bg-orange-500 animate-pulse' : 'bg-slate-300'}`}></div>
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                        {o.status === 'preparing' ? 'En el fuego' : 'Esperando turno'}
+                        {o.status === 'preparing' ? 'En el fuego' : 'Esperando inicio'}
                       </span>
                     </div>
                   </div>
                 </div>
-                {/* CRONOMETRO */}
-                <div className="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3">
-                  <span className="text-red-500 animate-pulse">⏱</span>
-                  <span className="font-mono text-3xl font-black tracking-widest">{formatTime(o.createdAt)}</span>
+                {/* CRONOMETRO - Corre cuando está en 'preparing' */}
+                <div className={`px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 ${o.status === 'preparing' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                  <span className={o.status === 'preparing' ? 'text-red-500 animate-pulse' : ''}>⏱</span>
+                  <span className="font-mono text-3xl font-black tracking-widest">
+                    {o.status === 'preparing' ? formatTime(o.createdAt) : '00:00'}
+                  </span>
                 </div>
               </div>
 
@@ -86,20 +88,20 @@ const OrderStatusBoard: React.FC = () => {
               </div>
 
               {/* ACCIONES */}
-              <div className="p-4 bg-slate-50 border-t border-slate-100 grid grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 border-t border-slate-100">
                 {o.status === 'pending' ? (
                   <button 
                     onClick={() => updateStatus(o.id, 'preparing')}
-                    className="col-span-2 bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all uppercase tracking-widest shadow-lg shadow-blue-100"
+                    className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-xl hover:bg-blue-700 transition-all uppercase tracking-[0.2em] shadow-lg shadow-blue-100 active:scale-95"
                   >
-                    ▶ Iniciar Preparación
+                    🚀 INICIAR PEDIDO
                   </button>
                 ) : (
                   <button 
                     onClick={() => updateStatus(o.id, 'ready')}
-                    className="col-span-2 bg-green-500 text-white py-5 rounded-2xl font-black text-lg hover:bg-green-600 transition-all uppercase tracking-widest shadow-lg shadow-green-100"
+                    className="w-full bg-green-500 text-white py-6 rounded-2xl font-black text-xl hover:bg-green-600 transition-all uppercase tracking-[0.2em] shadow-lg shadow-green-100 active:scale-95"
                   >
-                    ✔ ¡Terminado / Listo!
+                    ✔ ¡LISTO PARA ENTREGAR!
                   </button>
                 )}
               </div>
@@ -119,23 +121,23 @@ const OrderStatusBoard: React.FC = () => {
         <div className="p-8 bg-red-700/30 backdrop-blur-md border-b border-white/10 flex justify-between items-end">
           <div>
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase leading-none">Listos</h2>
-            <p className="text-red-200 font-bold text-xl uppercase tracking-widest mt-2">¡A comer!</p>
+            <p className="text-red-200 font-bold text-xl uppercase tracking-widest mt-2">¡Para Ivanna!</p>
           </div>
           <div className="text-right">
-            <span className="text-red-200 font-black text-[10px] uppercase tracking-[0.4em]">Por entregar</span>
+            <span className="text-red-200 font-black text-[10px] uppercase tracking-[0.4em]">Entregas</span>
             <div className="text-4xl font-black text-white tabular-nums">{ready.length}</div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
           {ready.map(o => (
-            <div key={o.id} className="bg-white rounded-[4rem] p-10 shadow-2xl transform hover:scale-[1.02] transition-all relative overflow-hidden group border-8 border-white">
+            <div key={o.id} className="bg-white rounded-[4rem] p-10 shadow-2xl transform hover:scale-[1.02] transition-all relative overflow-hidden border-8 border-white">
               <div className="flex flex-col items-center text-center">
                 <div className="text-[10rem] font-black text-red-600 leading-none tracking-tighter">#{o.orderNumber}</div>
                 <div className="text-3xl font-black text-slate-900 uppercase tracking-tighter mt-4">{o.customerName}</div>
                 
                 <div className="w-full mt-8 pt-8 border-t border-slate-100">
-                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-4">Contenido</p>
+                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-4">Resumen</p>
                    <div className="flex flex-wrap justify-center gap-2">
                      {o.items.map((i, idx) => (
                        <span key={idx} className="bg-slate-100 px-4 py-2 rounded-full text-xs font-black text-slate-600 uppercase">
@@ -147,14 +149,11 @@ const OrderStatusBoard: React.FC = () => {
 
                 <button 
                   onClick={() => updateStatus(o.id, 'delivered')}
-                  className="w-full mt-10 bg-slate-900 text-white py-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-widest hover:bg-green-500 transition-all shadow-xl"
+                  className="w-full mt-10 bg-slate-950 text-white py-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-[0.2em] hover:bg-green-600 transition-all shadow-xl active:scale-95"
                 >
-                  Entregado ✓
+                  PEDIDO ENTREGADO ✓
                 </button>
               </div>
-
-              {/* Overlay de confirmación rápida */}
-              <div className="absolute inset-0 bg-green-500 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none"></div>
             </div>
           ))}
           {ready.length === 0 && (
