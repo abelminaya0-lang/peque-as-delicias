@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import CustomerMenu from './pages/CustomerMenu';
-import KitchenDisplay from './pages/KitchenDisplay';
-import OrderStatusBoard from './pages/OrderStatusBoard';
-import { AppRoute } from './types';
+import CustomerMenu from './pages/CustomerMenu.tsx';
+import KitchenDisplay from './pages/KitchenDisplay.tsx';
+import OrderStatusBoard from './pages/OrderStatusBoard.tsx';
+import { AppRoute } from './types.ts';
 
 const Navbar: React.FC = () => {
   const location = useLocation();

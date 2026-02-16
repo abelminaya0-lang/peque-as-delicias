@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Order } from '../types';
-import { orderService } from '../services/orderService';
+import { Order } from '../types.ts';
+import { orderService } from '../services/orderService.ts';
 
 const KitchenDisplay: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);

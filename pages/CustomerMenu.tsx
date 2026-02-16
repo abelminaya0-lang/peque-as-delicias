@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { MENU_ITEMS, CATEGORIES } from '../data';
-import { MenuItem, CartItem, Order } from '../types';
-import { orderService } from '../services/orderService';
+import { MENU_ITEMS, CATEGORIES } from '../data.ts';
+import { MenuItem, CartItem, Order } from '../types.ts';
+import { orderService } from '../services/orderService.ts';
 
 const CustomerMenu: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Comidas');

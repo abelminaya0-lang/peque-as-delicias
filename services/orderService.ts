@@ -1,5 +1,5 @@
 
-import { Order } from '../types';
+import { Order } from '../types.ts';
 
 const STORAGE_KEY = 'quickorder_orders';
 const CHANNEL_NAME = 'quickorder_sync';
